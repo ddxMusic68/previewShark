@@ -172,6 +172,7 @@ class MainWindow(QWidget):
         if not self.current:
             return
         try:
+            self.player.unload()
             target = keep_file(self.current, self.folder)
             self.current = None
             self.refresh()
@@ -193,7 +194,7 @@ class MainWindow(QWidget):
         )
         if reply != QMessageBox.StandardButton.Yes:
             return
-        self.player.stop()
+        self.player.unload()
         try:
             delete_file(path)
             self.current = None
@@ -210,6 +211,7 @@ class MainWindow(QWidget):
             QMessageBox.warning(self, "Rename", "Enter a name first.")
             return
         try:
+            self.player.unload()
             target = rename_file(self.current, new_stem)
             self.current = target
             self.name_edit.setText(target.stem)
@@ -217,7 +219,9 @@ class MainWindow(QWidget):
             self.status.setText(f"Renamed to: {target.name}")
         except ValueError as e:
             QMessageBox.warning(self, "Rename", str(e))
+            self.player.play_file(self.current)
         except FileExistsError as e:
             QMessageBox.warning(self, "Rename", str(e))
+            self.player.play_file(self.current)
         except Exception as e:
             QMessageBox.critical(self, "Rename failed", str(e))
