@@ -3,18 +3,19 @@ from pathlib import Path
 from send2trash import send2trash
 
 
-def keep_file(path: Path, folder: Path) -> Path:
-    keep_dir = folder / "Keep"
-    keep_dir.mkdir(exist_ok=True)
-    target = keep_dir / path.name
-    if target.exists():
-        raise FileExistsError(f"File already exists in Keep folder: {target.name}")
-    shutil.move(str(path), str(target))
-    return target
-
-
 def delete_file(path: Path) -> None:
     send2trash(str(path))
+
+
+def save_to_project(path: Path, destination: Path) -> Path:
+    destination.mkdir(parents=True, exist_ok=True)
+    target = destination / path.name
+    counter = 1
+    while target.exists():
+        target = destination / f"{path.stem} ({counter}){path.suffix}"
+        counter += 1
+    shutil.move(str(path), str(target))
+    return target
 
 
 def rename_file(path: Path, new_stem: str) -> Path:

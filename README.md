@@ -6,13 +6,14 @@ A small Windows app for reviewing OBS recordings.
 - Watches a folder for new video recordings.
 - Automatically selects and plays a newly detected recording.
 - Play/Pause (`Space`)
-- KEEP: moves the recording to a `Keep` subfolder
 - Delete (moves to Windows Recycle Bin, `Delete` key)
 - Rename
 - Previous/next recording (`Up`/`Down` keys)
 - Recording list sorted newest first
 - Lets you choose your OBS recording folder
 - "Default Folder" button saves the current folder to `settings.json`
+- Projects folder: pick your output root, then "Save to Project" moves the
+  current recording into a folder you choose or create inside it
 
 ## Run
 Install Python 3.11+ on Windows, then:

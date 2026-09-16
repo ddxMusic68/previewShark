@@ -7,8 +7,10 @@ from PySide6.QtWidgets import (
 )
 
 from lib.services.file_service import scan_folder, detect_new_files
-from lib.services.file_operations import keep_file, delete_file, rename_file
-from lib.services.settings_service import load_folder, save_folder
+from lib.services.file_operations import delete_file, rename_file, save_to_project
+from lib.services.settings_service import (
+    load_folder, save_folder, load_projects_folder, save_projects_folder
+)
 from lib.widgets.recording_list import RecordingList
 from lib.widgets.video_player import VideoPlayer
 
@@ -20,6 +22,7 @@ class MainWindow(QWidget):
         self.resize(1100, 700)
 
         self.folder = load_folder()
+        self.projects_folder = load_projects_folder()
         self.current = None
         self.last_snapshot: set[str] = set()
 
@@ -31,6 +34,7 @@ class MainWindow(QWidget):
 
     def _build_ui(self):
         self.folder_label = QLabel(str(self.folder))
+        self.projects_label = QLabel(str(self.projects_folder))
         self.name_edit = QLineEdit()
         self.name_edit.setPlaceholderText("Recording name")
 
@@ -42,18 +46,20 @@ class MainWindow(QWidget):
 
         choose = QPushButton("Choose OBS Folder")
         default = QPushButton("Default Folder")
+        projects = QPushButton("Projects Folder")
         play = QPushButton("Play / Pause")
-        keep = QPushButton("KEEP")
         delete = QPushButton("DELETE")
         rename = QPushButton("Rename")
+        save = QPushButton("Save to Project")
         refresh = QPushButton("Refresh")
 
         self._btn_choose = choose
         self._btn_default = default
+        self._btn_projects = projects
         self._btn_play = play
-        self._btn_keep = keep
         self._btn_delete = delete
         self._btn_rename = rename
+        self._btn_save = save
         self._btn_refresh = refresh
 
         top = QHBoxLayout()
@@ -62,11 +68,15 @@ class MainWindow(QWidget):
         top.addWidget(self.folder_label, 1)
         top.addWidget(refresh)
 
+        project_row = QHBoxLayout()
+        project_row.addWidget(projects)
+        project_row.addWidget(self.projects_label, 1)
+
         controls = QHBoxLayout()
         controls.addWidget(play)
-        controls.addWidget(keep)
         controls.addWidget(delete)
         controls.addWidget(rename)
+        controls.addWidget(save)
 
         left = QVBoxLayout()
         left.addWidget(QLabel("Recordings"))
@@ -86,15 +96,17 @@ class MainWindow(QWidget):
 
         main = QVBoxLayout(self)
         main.addLayout(top)
+        main.addLayout(project_row)
         main.addWidget(container, 1)
 
     def _connect_signals(self):
         self._btn_choose.clicked.connect(self.choose_folder)
         self._btn_default.clicked.connect(self.set_default_folder)
+        self._btn_projects.clicked.connect(self.choose_projects_folder)
         self._btn_play.clicked.connect(self.player.toggle_play)
-        self._btn_keep.clicked.connect(self.keep)
         self._btn_delete.clicked.connect(self.delete_current)
         self._btn_rename.clicked.connect(self.rename_current)
+        self._btn_save.clicked.connect(self.save)
         self._btn_refresh.clicked.connect(self.refresh)
         self.recording_list.itemClicked.connect(self._on_item_clicked)
 
@@ -124,6 +136,35 @@ class MainWindow(QWidget):
             return
         save_folder(self.folder)
         self.status.setText(f"Default folder saved to {save_folder.__globals__['SETTINGS_FILE']}")
+
+    def choose_projects_folder(self):
+        folder = QFileDialog.getExistingDirectory(
+            self, "Select Projects Folder", str(self.projects_folder)
+        )
+        if folder:
+            self.projects_folder = Path(folder)
+            save_projects_folder(self.projects_folder)
+            self.projects_label.setText(str(self.projects_folder))
+            self.status.setText(f"Projects folder set: {self.projects_folder}")
+
+    def save(self):
+        if not self.current or not self.current.exists():
+            return
+        dest = QFileDialog.getExistingDirectory(
+            self,
+            "Choose or create a folder in the projects directory",
+            str(self.projects_folder),
+        )
+        if not dest:
+            return
+        try:
+            self.player.unload()
+            target = save_to_project(self.current, Path(dest))
+            self.current = None
+            self.refresh()
+            self.status.setText(f"Moved to project: {target.name} -> {target.parent}")
+        except Exception as e:
+            QMessageBox.critical(self, "Save failed", str(e))
 
     def refresh(self):
         files = scan_folder(self.folder)
@@ -167,20 +208,6 @@ class MainWindow(QWidget):
         path = self.recording_list.selected_path()
         if path:
             self.select_path(path)
-
-    def keep(self):
-        if not self.current:
-            return
-        try:
-            self.player.unload()
-            target = keep_file(self.current, self.folder)
-            self.current = None
-            self.refresh()
-            self.status.setText(f"Kept: {target.name}")
-        except FileExistsError as e:
-            QMessageBox.warning(self, "Keep", str(e))
-        except Exception as e:
-            QMessageBox.critical(self, "Keep failed", str(e))
 
     def delete_current(self):
         if not self.current or not self.current.exists():

@@ -13,15 +13,31 @@ def _read() -> dict:
         return {}
 
 
+def _write(data: dict) -> None:
+    with open(SETTINGS_FILE, "w", encoding="utf-8") as f:
+        json.dump(data, f, indent=2)
+
+
+def _load_path(key: str, default: Path) -> Path:
+    value = _read().get(key)
+    return Path(value) if value else default
+
+
 def load_folder() -> Path:
-    folder = _read().get("folder")
-    if folder:
-        return Path(folder)
-    return Path.home() / "Videos"
+    return _load_path("folder", Path.home() / "Videos")
 
 
 def save_folder(path: Path) -> None:
     data = _read()
     data["folder"] = str(path)
-    with open(SETTINGS_FILE, "w", encoding="utf-8") as f:
-        json.dump(data, f, indent=2)
+    _write(data)
+
+
+def load_projects_folder() -> Path:
+    return _load_path("projects_folder", Path.home() / "Projects")
+
+
+def save_projects_folder(path: Path) -> None:
+    data = _read()
+    data["projects_folder"] = str(path)
+    _write(data)
