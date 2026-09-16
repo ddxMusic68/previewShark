@@ -6,10 +6,10 @@ from PySide6.QtWidgets import (
     QLineEdit, QFileDialog, QMessageBox
 )
 
-from services.file_service import scan_folder, detect_new_files
-from services.file_operations import keep_file, delete_file, rename_file
-from widgets.recording_list import RecordingList
-from widgets.video_player import VideoPlayer
+from lib.services.file_service import scan_folder, detect_new_files
+from lib.services.file_operations import keep_file, delete_file, rename_file
+from lib.widgets.recording_list import RecordingList
+from lib.widgets.video_player import VideoPlayer
 
 
 class MainWindow(QWidget):
