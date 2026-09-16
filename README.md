@@ -12,6 +12,7 @@ A small Windows app for reviewing OBS recordings.
 - Previous/next recording (`Up`/`Down` keys)
 - Recording list sorted newest first
 - Lets you choose your OBS recording folder
+- "Default Folder" button saves the current folder to `settings.json`
 
 ## Run
 Install Python 3.11+ on Windows, then:

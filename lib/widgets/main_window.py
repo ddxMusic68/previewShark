@@ -8,6 +8,7 @@ from PySide6.QtWidgets import (
 
 from lib.services.file_service import scan_folder, detect_new_files
 from lib.services.file_operations import keep_file, delete_file, rename_file
+from lib.services.settings_service import load_folder, save_folder
 from lib.widgets.recording_list import RecordingList
 from lib.widgets.video_player import VideoPlayer
 
@@ -18,7 +19,7 @@ class MainWindow(QWidget):
         self.setWindowTitle("Take Reviewer")
         self.resize(1100, 700)
 
-        self.folder = Path.home() / "Videos"
+        self.folder = load_folder()
         self.current = None
         self.last_snapshot: set[str] = set()
 
@@ -40,6 +41,7 @@ class MainWindow(QWidget):
         self.player = VideoPlayer()
 
         choose = QPushButton("Choose OBS Folder")
+        default = QPushButton("Default Folder")
         play = QPushButton("Play / Pause")
         keep = QPushButton("KEEP")
         delete = QPushButton("DELETE")
@@ -47,6 +49,7 @@ class MainWindow(QWidget):
         refresh = QPushButton("Refresh")
 
         self._btn_choose = choose
+        self._btn_default = default
         self._btn_play = play
         self._btn_keep = keep
         self._btn_delete = delete
@@ -55,6 +58,7 @@ class MainWindow(QWidget):
 
         top = QHBoxLayout()
         top.addWidget(choose)
+        top.addWidget(default)
         top.addWidget(self.folder_label, 1)
         top.addWidget(refresh)
 
@@ -86,6 +90,7 @@ class MainWindow(QWidget):
 
     def _connect_signals(self):
         self._btn_choose.clicked.connect(self.choose_folder)
+        self._btn_default.clicked.connect(self.set_default_folder)
         self._btn_play.clicked.connect(self.player.toggle_play)
         self._btn_keep.clicked.connect(self.keep)
         self._btn_delete.clicked.connect(self.delete_current)
@@ -112,6 +117,13 @@ class MainWindow(QWidget):
             self.folder = Path(folder)
             self.folder_label.setText(str(self.folder))
             self.refresh()
+
+    def set_default_folder(self):
+        if not self.folder or not self.folder.exists():
+            QMessageBox.warning(self, "Default Folder", "Select an existing folder first.")
+            return
+        save_folder(self.folder)
+        self.status.setText(f"Default folder saved to {save_folder.__globals__['SETTINGS_FILE']}")
 
     def refresh(self):
         files = scan_folder(self.folder)
