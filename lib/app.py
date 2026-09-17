@@ -5,7 +5,7 @@ from lib.widgets.main_window import MainWindow
 
 def main() -> int:
     app = QApplication([])
-    app.setApplicationName("Take Reviewer")
+    app.setApplicationName("preview_shark")
     window = MainWindow()
     window.show()
     return app.exec()

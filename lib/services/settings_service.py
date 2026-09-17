@@ -1,7 +1,11 @@
 import json
+import sys
 from pathlib import Path
 
-SETTINGS_FILE = Path(__file__).resolve().parent.parent.parent / "settings.json"
+if getattr(sys, "frozen", False):
+    SETTINGS_FILE = Path(sys.executable).resolve().parent / "settings.json"
+else:
+    SETTINGS_FILE = Path(__file__).resolve().parent.parent.parent / "settings.json"
 
 
 def _read() -> dict:
@@ -40,4 +44,14 @@ def load_projects_folder() -> Path:
 def save_projects_folder(path: Path) -> None:
     data = _read()
     data["projects_folder"] = str(path)
+    _write(data)
+
+
+def load_skip_rename_warning() -> bool:
+    return bool(_read().get("skip_rename_warning", False))
+
+
+def save_skip_rename_warning(value: bool) -> None:
+    data = _read()
+    data["skip_rename_warning"] = bool(value)
     _write(data)

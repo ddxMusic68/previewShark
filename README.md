@@ -1,4 +1,4 @@
-# Take Reviewer
+# preview_shark
 
 A small Windows app for reviewing OBS recordings.
 
@@ -14,6 +14,9 @@ A small Windows app for reviewing OBS recordings.
 - "Default Folder" button saves the current folder to `settings.json`
 - Projects folder: pick your output root, then "Save to Project" moves the
   current recording into a folder you choose or create inside it
+- Saving a recording that still looks auto-generated (its name contains a
+  `YYYY-MM-DD` date or `(recording)`) shows a warning with a "Do not ask again"
+  option
 
 ## Run
 Install Python 3.11+ on Windows, then:
@@ -26,7 +29,7 @@ In OBS, open:
 Settings -> Output -> Recording
 and choose your Recording Path.
 
-Then choose that same folder in Take Reviewer.
+Then choose that same folder in preview_shark.
 
 ## Notes
 Windows Media Foundation determines which codecs can play in the preview.

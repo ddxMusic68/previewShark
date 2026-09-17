@@ -1,7 +1,15 @@
 from pathlib import Path
+import re
 
 
 VIDEO_EXTS = {".mp4", ".mkv", ".mov", ".avi", ".webm", ".m4v"}
+DATE_RE = re.compile(r"\d{4}-\d{2}-\d{2}")
+
+
+def is_default_obs_name(stem: str) -> bool:
+    if DATE_RE.search(stem):
+        return True
+    return "(recording)" in stem.lower()
 
 
 def scan_folder(folder: Path) -> list[Path]:

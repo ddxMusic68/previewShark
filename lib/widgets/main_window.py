@@ -3,13 +3,14 @@ from PySide6.QtCore import QTimer, Qt
 from PySide6.QtGui import QShortcut, QKeySequence
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
-    QLineEdit, QFileDialog, QMessageBox
+    QLineEdit, QFileDialog, QMessageBox, QCheckBox
 )
 
-from lib.services.file_service import scan_folder, detect_new_files
+from lib.services.file_service import scan_folder, detect_new_files, is_default_obs_name
 from lib.services.file_operations import delete_file, rename_file, save_to_project
 from lib.services.settings_service import (
-    load_folder, save_folder, load_projects_folder, save_projects_folder
+    load_folder, save_folder, load_projects_folder, save_projects_folder,
+    load_skip_rename_warning, save_skip_rename_warning
 )
 from lib.widgets.recording_list import RecordingList
 from lib.widgets.video_player import VideoPlayer
@@ -18,7 +19,7 @@ from lib.widgets.video_player import VideoPlayer
 class MainWindow(QWidget):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("Take Reviewer")
+        self.setWindowTitle("preview_shark")
         self.resize(1100, 700)
 
         self.folder = load_folder()
@@ -150,6 +151,8 @@ class MainWindow(QWidget):
     def save(self):
         if not self.current or not self.current.exists():
             return
+        if not self._confirm_unrenamed():
+            return
         dest = QFileDialog.getExistingDirectory(
             self,
             "Choose or create a folder in the projects directory",
@@ -165,6 +168,30 @@ class MainWindow(QWidget):
             self.status.setText(f"Moved to project: {target.name} -> {target.parent}")
         except Exception as e:
             QMessageBox.critical(self, "Save failed", str(e))
+
+    def _confirm_unrenamed(self) -> bool:
+        if load_skip_rename_warning():
+            return True
+        if not is_default_obs_name(self.current.stem):
+            return True
+        box = QMessageBox(self)
+        box.setWindowTitle("Save to Project")
+        box.setIcon(QMessageBox.Icon.Warning)
+        box.setText("This recording hasn't been renamed.")
+        box.setInformativeText(
+            f"'{self.current.name}' still has its default OBS name.\n"
+            "Save it to a project anyway?"
+        )
+        box.setStandardButtons(
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+        )
+        box.setDefaultButton(QMessageBox.StandardButton.No)
+        checkbox = QCheckBox("Do not ask again")
+        box.setCheckBox(checkbox)
+        result = box.exec()
+        if checkbox.isChecked():
+            save_skip_rename_warning(True)
+        return result == QMessageBox.StandardButton.Yes
 
     def refresh(self):
         files = scan_folder(self.folder)
